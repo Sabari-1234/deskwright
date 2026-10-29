@@ -50,3 +50,7 @@ Implement `TypedTool` in a new file under `crates/deskwright-mcp/src/tools/`, re
 `crates/deskwright/src/composition.rs` and in the test fixture
 (`crates/deskwright-mcp/tests/support/mod.rs`), and add tests and a feature page. See
 `docs/features/mcp-server.md`.
+
+## Releasing
+
+Maintainers: see [RELEASING.md](RELEASING.md).

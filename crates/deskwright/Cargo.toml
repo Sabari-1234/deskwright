@@ -1,6 +1,6 @@
 [package]
 name = "deskwright"
-description = "Playwright for desktop apps: drive native apps through the OS accessibility API from an MCP client, the command line, or Rust. macOS today."
+description = "Playwright for desktop apps: automate native apps through the accessibility API"
 readme = "../../README.md"
 version.workspace = true
 edition.workspace = true

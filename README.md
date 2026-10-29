@@ -34,15 +34,34 @@ deskwright call desk_click '{ "app": "Notes", "role": "button", "title": "New No
 
 ## Install
 
-Requires macOS 13 or later (see [Platforms](#platforms)) and Rust 1.85 or later.
+Requires macOS 13 or later (see [Platforms](#platforms)). Pick one:
+
+```bash
+# npm (no global install needed; also how MCP clients run it)
+npx -y deskwright --version
+
+# Homebrew
+brew install sabari-1234/tap/deskwright
+
+# Shell installer
+curl -LsSf https://github.com/Sabari-1234/deskwright/releases/latest/download/deskwright-installer.sh | sh
+```
+
+Prebuilt binaries for Apple Silicon and Intel are also attached to every
+[GitHub Release](https://github.com/Sabari-1234/deskwright/releases).
+
+<details>
+<summary>Build from source</summary>
+
+Requires Rust 1.85 or later.
 
 ```bash
 git clone https://github.com/Sabari-1234/deskwright.git
 cd deskwright
-cargo build --release
+cargo build --release   # the binary is target/release/deskwright
 ```
 
-The binary is `target/release/deskwright`. Put it on your `PATH` or refer to it by its full path.
+</details>
 
 ### Permissions
 
@@ -62,11 +81,15 @@ Add deskwright to your MCP client's configuration:
 {
   "mcpServers": {
     "deskwright": {
-      "command": "/absolute/path/to/deskwright/target/release/deskwright"
+      "command": "npx",
+      "args": ["-y", "deskwright"]
     }
   }
 }
 ```
+
+If you installed it with Homebrew or the shell installer, use `"command": "deskwright"`
+instead. Grant the Accessibility permission to the MCP client app (see below).
 
 Then ask, for example: *"Open TextEdit, write a short poem, and save it in Downloads."* The
 assistant uses tools such as `desk_snapshot`, `desk_click`, `desk_type` and `desk_expect`, and can
