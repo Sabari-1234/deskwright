@@ -46,15 +46,14 @@ unsafe_op_in_unsafe_fn = "deny"
 [workspace.lints.clippy]
 all = { level = "warn", priority = -1 }
 
-# Release packaging: `dist` builds the binaries on a version tag and publishes them to GitHub
-# Releases, npm (`npx deskwright`), a Homebrew tap and a shell installer. See RELEASING.md.
+# Release packaging: `dist` builds the binaries on a version tag and attaches them, a shell
+# installer, a Homebrew formula and an npm package to the GitHub Release. The formula is pushed
+# to the tap by scripts/update-homebrew-tap.sh. See RELEASING.md.
 [workspace.metadata.dist]
 cargo-dist-version = "0.33.1"
 ci = "github"
 installers = ["shell", "npm", "homebrew"]
 targets = ["aarch64-apple-darwin", "x86_64-apple-darwin"]
-tap = "Sabari-1234/homebrew-tap"
-publish-jobs = ["homebrew", "npm"]
 install-path = "CARGO_HOME"
 install-updater = false
 

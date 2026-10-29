@@ -7,29 +7,20 @@ the config and run `dist generate`.
 
 One release publishes:
 
-| Channel | What users run |
-|---|---|
-| GitHub Releases | Prebuilt `aarch64-apple-darwin` and `x86_64-apple-darwin` archives with checksums |
-| npm | `npx -y deskwright` |
-| Homebrew | `brew install sabari-1234/tap/deskwright` (formula pushed to `Sabari-1234/homebrew-tap`) |
-| Shell installer | `curl -LsSf …/deskwright-installer.sh \| sh` |
+| Channel | What users run | Published by |
+|---|---|---|
+| GitHub Releases | Prebuilt `aarch64-apple-darwin` and `x86_64-apple-darwin` archives with checksums | the workflow |
+| Shell installer | `curl -LsSf …/deskwright-installer.sh \| sh` | the workflow (attached to the release) |
+| Homebrew | `brew install sabari-1234/tap/deskwright` | `scripts/update-homebrew-tap.sh`, run after the workflow |
+| npm | `npx -y deskwright` | not yet published (see below) |
 
-## One-time setup (repository secrets)
-
-In **Settings → Secrets and variables → Actions → New repository secret** of
-`Sabari-1234/deskwright`, add:
-
-- `NPM_TOKEN`: an npm **granular access token** with read-and-write permission for the
-  `deskwright` package (or all packages, for the very first publish), created at
-  npmjs.com → Access Tokens.
-- `HOMEBREW_TAP_TOKEN`: a GitHub **fine-grained personal access token** limited to the
-  `Sabari-1234/homebrew-tap` repository with *Contents: read and write*, created at
-  github.com → Settings → Developer settings → Personal access tokens.
+No repository secrets are needed: the workflow uses only the built-in `GITHUB_TOKEN`, and the
+tap is updated with the maintainer's GitHub CLI login.
 
 ## Cutting a release
 
 1. Update `version` in the root `Cargo.toml` and add the release notes to `CHANGELOG.md`.
-2. Run `./scripts/check.sh` and `dist plan` (it lists what will be published).
+2. Run `./scripts/check.sh` and `dist plan` (it lists what will be built).
 3. Commit, then tag and push:
 
    ```bash
@@ -37,8 +28,23 @@ In **Settings → Secrets and variables → Actions → New repository secret** 
    git push origin main v0.1.0
    ```
 
-The workflow builds both macOS targets, creates the GitHub Release with the archives and
-installers, then publishes the npm package and updates the Homebrew formula.
+4. When the "Release" workflow has finished, publish the Homebrew formula:
+
+   ```bash
+   ./scripts/update-homebrew-tap.sh v0.1.0
+   ```
+
+## npm (not yet enabled)
+
+Each release already contains `deskwright-npm-package.tar.gz`. To publish it:
+
+1. Sign in once with `npm login`, then publish the first version from the release asset:
+   `npm publish deskwright-npm-package.tar.gz --access public`.
+2. To publish later releases from the workflow, add `"npm"` to `publish-jobs` in
+   `[workspace.metadata.dist]`, run `dist generate`, and give the job credentials: either an
+   `NPM_TOKEN` repository secret, or, if the generated job supports it, an npm **trusted
+   publisher** for `Sabari-1234/deskwright` and `release.yml` (set in the package's settings
+   on npmjs.com), which needs no token.
 
 ## Adding a platform
 
