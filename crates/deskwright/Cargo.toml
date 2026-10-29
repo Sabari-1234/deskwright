@@ -1,0 +1,44 @@
+[package]
+name = "deskwright"
+description = "Playwright for desktop apps: drive native apps through the OS accessibility API from an MCP client, the command line, or Rust. macOS today."
+readme = "../../README.md"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+base64.workspace = true
+clap.workspace = true
+deskwright-core.workspace = true
+deskwright-mcp.workspace = true
+deskwright-portable.workspace = true
+deskwright-runner.workspace = true
+rmcp.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+[lib]
+name = "deskwright"
+path = "src/lib.rs"
+
+[[bin]]
+name = "deskwright"
+path = "src/main.rs"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+deskwright-macos.workspace = true
+
+[dev-dependencies]
+deskwright-core = { workspace = true, features = ["test-support"] }
+
+[lints]
+workspace = true

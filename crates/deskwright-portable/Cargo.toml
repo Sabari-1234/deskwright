@@ -1,0 +1,20 @@
+[package]
+name = "deskwright-portable"
+description = "Cross-platform adapters for deskwright-core ports: synthetic input (enigo) and screen capture (xcap)."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+enigo.workspace = true
+deskwright-core.workspace = true
+xcap.workspace = true
+
+[lints]
+workspace = true
