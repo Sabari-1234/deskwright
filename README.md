@@ -75,25 +75,141 @@ Restart deskwright after granting a permission.
 
 ## Use it from an AI assistant (MCP)
 
-Add deskwright to your MCP client's configuration:
+deskwright is an [MCP](https://modelcontextprotocol.io) server that speaks over stdin/stdout.
+You don't start it yourself: you register it once in your AI app, and the app launches it
+(`npx -y deskwright`) whenever it needs the tools, and stops it when it quits. `npx` comes
+with [Node.js](https://nodejs.org); with Homebrew or the shell installer, use
+`"command": "deskwright"` instead.
+
+### 1. Register it in your AI app
+
+<details open>
+<summary><b>Claude Code</b></summary>
+
+```bash
+claude mcp add deskwright -- npx -y deskwright            # this project only
+claude mcp add --scope user deskwright -- npx -y deskwright   # every project
+```
+
+Check it with `claude mcp list`, or `/mcp` inside a session.
+</details>
+
+<details>
+<summary><b>Claude Desktop</b></summary>
+
+Settings → Developer → **Edit Config** opens
+`~/Library/Application Support/Claude/claude_desktop_config.json`. Add:
 
 ```json
 {
   "mcpServers": {
-    "deskwright": {
-      "command": "npx",
-      "args": ["-y", "deskwright"]
-    }
+    "deskwright": { "command": "npx", "args": ["-y", "deskwright"] }
   }
 }
 ```
 
-If you installed it with Homebrew or the shell installer, `"command": "deskwright"` works too
-(use the full path from `which deskwright` if your client doesn't find it). Grant the Accessibility permission to the MCP client app (see below).
+Quit and reopen Claude Desktop; deskwright appears in the tools menu of a new chat.
+</details>
 
-Then ask, for example: *"Open TextEdit, write a short poem, and save it in Downloads."* The
-assistant uses tools such as `desk_snapshot`, `desk_click`, `desk_type` and `desk_expect`, and can
-send a whole plan at once with `desk_batch`.
+<details>
+<summary><b>Cursor</b></summary>
+
+Add to `~/.cursor/mcp.json` (every project) or `.cursor/mcp.json` (one project):
+
+```json
+{
+  "mcpServers": {
+    "deskwright": { "command": "npx", "args": ["-y", "deskwright"] }
+  }
+}
+```
+
+Then enable it under Cursor Settings → MCP.
+</details>
+
+<details>
+<summary><b>VS Code (GitHub Copilot agent mode)</b></summary>
+
+Add to `.vscode/mcp.json` in your workspace (note the `servers` key):
+
+```json
+{
+  "servers": {
+    "deskwright": { "type": "stdio", "command": "npx", "args": ["-y", "deskwright"] }
+  }
+}
+```
+
+Start it from the **Start** button that appears above the entry, then use Copilot Chat in
+Agent mode.
+</details>
+
+<details>
+<summary><b>Windsurf</b></summary>
+
+Add to `~/.codeium/windsurf/mcp_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "deskwright": { "command": "npx", "args": ["-y", "deskwright"] }
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>OpenAI Codex CLI</b></summary>
+
+Add to `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.deskwright]
+command = "npx"
+args = ["-y", "deskwright"]
+```
+</details>
+
+<details>
+<summary><b>Any other MCP client</b></summary>
+
+Use a stdio server with command `npx` and arguments `-y deskwright`. To pass options, add
+them after the name, for example `["-y", "deskwright", "--enable-script"]` (see
+[Configuration](#configuration)).
+</details>
+
+### 2. Allow it to control your Mac
+
+The first time deskwright acts on an app, macOS asks for permission for **the app that
+launched it**: Claude, Cursor or VS Code, or your terminal app for Claude Code and Codex. If no
+prompt appears, add that app yourself in System Settings → Privacy & Security →
+**Accessibility** (and **Screen Recording** if you want screenshots), then restart the AI app.
+
+### 3. Try it
+
+Ask your assistant:
+
+- *"Use deskwright to list the apps that are running."* (checks the connection, no
+  permission needed)
+- *"Open TextEdit, write a short poem, and save it in Downloads."*
+- *"In Finder, open my Downloads folder and tell me the five newest files."*
+
+The assistant uses tools such as `desk_snapshot`, `desk_click`, `desk_type` and `desk_expect`,
+and can send a whole plan at once with `desk_batch`.
+
+### Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| The tools don't appear | Restart the AI app after editing its config; check the JSON is valid |
+| `npx: command not found` | Install Node.js, or install deskwright with Homebrew and use `"command": "deskwright"` |
+| "Accessibility permission is not granted" | Allow the AI app (or terminal) under Privacy & Security → Accessibility, then restart it |
+| Screenshots fail | Allow Screen Recording for the same app |
+| It works in a terminal but not in the app | GUI apps may not see your shell's `PATH`; use the full path from `which npx` or `which deskwright` |
+
+To try the server by hand, run `npx -y deskwright tools` (lists the tools) or
+`npx -y deskwright call desk_list_apps`. Running `npx -y deskwright` on its own starts the
+server and waits silently for an MCP client on stdin; press Ctrl-C to stop it.
 
 ## Use it from the command line
 
