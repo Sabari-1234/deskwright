@@ -237,7 +237,7 @@ async fn screenshot_of_an_element_or_the_display_returns_a_png_block() {
     for screenshot in [element_shot, display_shot] {
         assert!(matches!(
             screenshot.blocks.as_slice(),
-            [OutputBlock::PngImage { .. }]
+            [OutputBlock::Image { .. }]
         ));
     }
 }

@@ -83,7 +83,7 @@ pub fn text_of(output: &ToolOutput) -> String {
         .iter()
         .filter_map(|block| match block {
             OutputBlock::Text(text) => Some(text.as_str()),
-            OutputBlock::PngImage { .. } => None,
+            OutputBlock::Image { .. } => None,
         })
         .collect::<Vec<_>>()
         .join("\n")
@@ -168,11 +168,6 @@ fn register_all_tools(desktop: &Arc<FakeDesktop>) -> ToolRegistry {
         element_registry.clone(),
         desktop.clone(),
     ));
-    let screenshots = Arc::new(ScreenshotService::new(
-        desktop.clone(),
-        element_registry.clone(),
-        desktop.clone(),
-    ));
 
     let launches = Arc::new(AppLaunchService::new(
         desktop.clone(),
@@ -191,6 +186,12 @@ fn register_all_tools(desktop: &Arc<FakeDesktop>) -> ToolRegistry {
         desktop.clone(),
         desktop.clone(),
         Duration::ZERO,
+    ));
+    let screenshots = Arc::new(ScreenshotService::new(
+        desktop.clone(),
+        element_registry.clone(),
+        desktop.clone(),
+        windows.clone(),
     ));
     let keyboard = Arc::new(KeyboardService::new(
         AppResolver::new(desktop.clone()),
@@ -239,7 +240,7 @@ fn register_all_tools(desktop: &Arc<FakeDesktop>) -> ToolRegistry {
         .and_then(|registry| registry.register(ScriptTool::new(desktop.clone(), SCRIPT_TIMEOUT)))
         .and_then(|registry| registry.register(LaunchAppTool::new(launches)))
         .and_then(|registry| registry.register(QuitAppTool::new(quits)))
-        .and_then(|registry| registry.register(WindowTool::new(windows)))
+        .and_then(|registry| registry.register(WindowTool::new(windows.clone())))
         .and_then(|registry| registry.register(ReadClipboardTool::new(desktop.clone())))
         .and_then(|registry| registry.register(WriteClipboardTool::new(desktop.clone())))
         .and_then(|registry| registry.register(PressKeysTool::new(keyboard)))

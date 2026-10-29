@@ -25,7 +25,7 @@ fn format_milliseconds(duration: std::time::Duration) -> String {
 pub(crate) mod test_reports {
     use std::time::Duration;
 
-    use crate::report::{FlowReport, StepReport};
+    use crate::report::{FlowReport, StepImage, StepReport};
 
     pub fn passing_and_failing() -> Vec<FlowReport> {
         vec![
@@ -38,7 +38,10 @@ pub(crate) mod test_reports {
                     duration: Duration::from_micros(97_400),
                     is_error: false,
                     text: "Notes is frontmost.".to_owned(),
-                    images_base64: vec!["iVBORw0KGgo=".to_owned()],
+                    images: vec![StepImage {
+                        mime_type: "image/jpeg".to_owned(),
+                        base64_data: "/9j/4AAQ".to_owned(),
+                    }],
                 }],
                 skipped_step_count: 0,
                 duration: Duration::from_millis(98),
@@ -52,7 +55,7 @@ pub(crate) mod test_reports {
                     duration: Duration::from_millis(5),
                     is_error: true,
                     text: "no element matching title 'send' appeared".to_owned(),
-                    images_base64: Vec::new(),
+                    images: Vec::new(),
                 }],
                 skipped_step_count: 2,
                 duration: Duration::from_millis(6),

@@ -276,7 +276,7 @@ assert!(!output.is_error);
 | `desk_select` | Choose an option from a pop-up button |
 | `desk_scroll_into_view` | Scroll an element into view |
 | `desk_menu` | Choose a menu-bar item, e.g. `File > Save As…` |
-| `desk_screenshot` | PNG of an element or the main display |
+| `desk_screenshot` | Image of an element, a window (`app`) or the display; `format: "jpeg"`, `resolution: "pixels"` |
 | `desk_read_clipboard` / `desk_write_clipboard` | Read or write the clipboard's text |
 | `desk_batch` | Run up to 50 tool calls in one request |
 | `desk_script` | Run AppleScript/JXA. **Off unless `--enable-script` is given** |

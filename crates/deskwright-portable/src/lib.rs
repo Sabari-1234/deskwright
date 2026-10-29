@@ -4,7 +4,8 @@
 mod display_region;
 mod drag_path;
 mod enigo_input_synthesizer;
-mod png_encoding;
+mod image_encoding;
+mod window_match;
 mod xcap_screen_capturer;
 
 pub use enigo_input_synthesizer::EnigoInputSynthesizer;

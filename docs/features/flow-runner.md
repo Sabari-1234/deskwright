@@ -22,7 +22,8 @@ with enough evidence to see what went wrong.
    `ToolDispatcher` (the same tool registry the MCP server uses) and times it with the
    injected `Clock`. It stops at the first failure unless the flow sets
    `"continueOnError": true`; the report counts the skipped steps.
-3. With `--trace <file>`, the runner calls `desk_screenshot` after every step and the
+3. With `--trace <file>`, the runner calls `desk_screenshot` (point-resolution JPEG, so long
+   traces stay small) after every step and the
    `HtmlTraceReporter` writes one self-contained HTML page: each flow, each step with its
    timing and full output, failed steps opened, and the screenshots inline (a small version of
    Playwright's trace viewer). Screenshots need the Screen Recording permission; without it
@@ -87,5 +88,5 @@ permissions.
   video encoder dependency; per-step screenshots in the trace cover most debugging needs.
 - Steps can't use values from earlier steps (such as a ref returned by a snapshot); locators
   make that rarely necessary.
-- Traces embed full-resolution PNG screenshots, about 2 MB per step on a Retina display.
+- Traces embed one JPEG screenshot per step, about 150 KB each for a full Retina display.
 - No parallel runs: flows drive one shared desktop, so they run one after another.

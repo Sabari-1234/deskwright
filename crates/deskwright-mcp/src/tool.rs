@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
 use deskwright_core::DeskwrightError;
-use deskwright_core::model::png_image::PngImage;
+use deskwright_core::model::encoded_image::EncodedImage;
 use serde::Serialize;
 
 pub type JsonObject = serde_json::Map<String, serde_json::Value>;
@@ -23,7 +23,11 @@ pub struct ToolSpec {
 #[derive(Debug, Clone, PartialEq)]
 pub enum OutputBlock {
     Text(String),
-    PngImage { base64_data: String },
+    /// Base64-encoded image bytes and their MIME type, such as `image/png`.
+    Image {
+        base64_data: String,
+        mime_type: &'static str,
+    },
 }
 
 /// A tool's result. Failures are results too (`is_error`), so the client can show them.
@@ -56,10 +60,11 @@ impl ToolOutput {
         }
     }
 
-    pub fn png(image: &PngImage) -> Self {
+    pub fn image(image: &EncodedImage) -> Self {
         Self {
-            blocks: vec![OutputBlock::PngImage {
+            blocks: vec![OutputBlock::Image {
                 base64_data: BASE64_STANDARD.encode(image.as_bytes()),
+                mime_type: image.mime_type(),
             }],
             is_error: false,
         }

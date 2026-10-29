@@ -4,10 +4,13 @@ use deskwright_mcp::tool::{JsonObject, OutputBlock, ToolDispatcher, ToolOutput};
 
 use crate::clock::Clock;
 use crate::flow::{Flow, FlowStep};
-use crate::report::{FlowReport, StepReport};
+use crate::report::{FlowReport, StepImage, StepReport};
 
 /// The tool called after each step when tracing, to show the screen as it was.
 const TRACE_SCREENSHOT_TOOL: &str = "desk_screenshot";
+/// Trace screenshots are JPEG at point resolution: readable, and a fraction of a full PNG's
+/// size, so traces of long flows stay small.
+const TRACE_SCREENSHOT_FORMAT: &str = "jpeg";
 
 /// Runs a flow's steps in order through a tool dispatcher and reports each one.
 pub struct FlowRunner {
@@ -56,13 +59,15 @@ impl FlowRunner {
             .dispatch(&step.tool, step.params.clone())
             .await;
         let duration = self.clock.now().saturating_duration_since(started);
-        let mut images_base64 = images_of(&output);
+        let mut images = images_of(&output);
         if self.is_tracing {
+            let arguments =
+                JsonObject::from_iter([("format".to_owned(), TRACE_SCREENSHOT_FORMAT.into())]);
             let screenshot = self
                 .dispatcher
-                .dispatch(TRACE_SCREENSHOT_TOOL, JsonObject::new())
+                .dispatch(TRACE_SCREENSHOT_TOOL, arguments)
                 .await;
-            images_base64.extend(images_of(&screenshot));
+            images.extend(images_of(&screenshot));
         }
         StepReport {
             index,
@@ -71,7 +76,7 @@ impl FlowRunner {
             duration,
             is_error: output.is_error,
             text: text_of(&output),
-            images_base64,
+            images,
         }
     }
 }
@@ -82,18 +87,24 @@ fn text_of(output: &ToolOutput) -> String {
         .iter()
         .filter_map(|block| match block {
             OutputBlock::Text(text) => Some(text.as_str()),
-            OutputBlock::PngImage { .. } => None,
+            OutputBlock::Image { .. } => None,
         })
         .collect::<Vec<_>>()
         .join("\n")
 }
 
-fn images_of(output: &ToolOutput) -> Vec<String> {
+fn images_of(output: &ToolOutput) -> Vec<StepImage> {
     output
         .blocks
         .iter()
         .filter_map(|block| match block {
-            OutputBlock::PngImage { base64_data } => Some(base64_data.clone()),
+            OutputBlock::Image {
+                base64_data,
+                mime_type,
+            } => Some(StepImage {
+                mime_type: (*mime_type).to_owned(),
+                base64_data: base64_data.clone(),
+            }),
             OutputBlock::Text(_) => None,
         })
         .collect()

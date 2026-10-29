@@ -6,8 +6,6 @@ use rmcp::model::{CallToolResult, ContentBlock, Tool as McpTool, ToolAnnotations
 
 use crate::tool::{OutputBlock, ToolOutput, ToolSpec};
 
-const PNG_MIME_TYPE: &str = "image/png";
-
 pub fn to_mcp_tool(spec: ToolSpec) -> McpTool {
     let annotations = ToolAnnotations::new()
         .read_only(spec.is_read_only)
@@ -28,7 +26,10 @@ pub fn to_call_tool_result(output: ToolOutput) -> CallToolResult {
 fn to_content_block(block: OutputBlock) -> ContentBlock {
     match block {
         OutputBlock::Text(text) => ContentBlock::text(text),
-        OutputBlock::PngImage { base64_data } => ContentBlock::image(base64_data, PNG_MIME_TYPE),
+        OutputBlock::Image {
+            base64_data,
+            mime_type,
+        } => ContentBlock::image(base64_data, mime_type),
     }
 }
 
@@ -64,8 +65,9 @@ mod tests {
         let output = ToolOutput {
             blocks: vec![
                 OutputBlock::Text("caption".to_owned()),
-                OutputBlock::PngImage {
-                    base64_data: "iVBORw==".to_owned(),
+                OutputBlock::Image {
+                    base64_data: "/9j/4A==".to_owned(),
+                    mime_type: "image/jpeg",
                 },
             ],
             is_error: false,
@@ -77,7 +79,7 @@ mod tests {
         assert!(matches!(&result.content[0], ContentBlock::Text(text) if text.text == "caption"));
         assert!(matches!(
             &result.content[1],
-            ContentBlock::Image(image) if image.mime_type == PNG_MIME_TYPE && image.data == "iVBORw=="
+            ContentBlock::Image(image) if image.mime_type == "image/jpeg" && image.data == "/9j/4A=="
         ));
     }
 

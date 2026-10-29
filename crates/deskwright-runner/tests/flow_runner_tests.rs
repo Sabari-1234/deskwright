@@ -34,17 +34,25 @@ impl Clock for TickingClock {
 #[derive(Default)]
 struct ScriptedDispatcher {
     calls: Mutex<Vec<String>>,
+    trace_arguments: Mutex<Vec<serde_json::Value>>,
 }
 
 #[async_trait]
 impl ToolDispatcher for ScriptedDispatcher {
-    async fn dispatch(&self, tool_name: &str, _arguments: JsonObject) -> ToolOutput {
+    async fn dispatch(&self, tool_name: &str, arguments: JsonObject) -> ToolOutput {
         self.calls.lock().unwrap().push(tool_name.to_owned());
+        if tool_name == "desk_screenshot" {
+            self.trace_arguments
+                .lock()
+                .unwrap()
+                .push(serde_json::Value::Object(arguments));
+        }
         match tool_name {
             "desk_fail" => ToolOutput::error("it broke"),
             "desk_screenshot" => ToolOutput {
-                blocks: vec![OutputBlock::PngImage {
+                blocks: vec![OutputBlock::Image {
                     base64_data: "UE5H".to_owned(),
+                    mime_type: "image/jpeg",
                 }],
                 is_error: false,
             },
@@ -115,7 +123,12 @@ async fn tracing_adds_a_screenshot_after_each_step() {
         .run(&flow(&["desk_list_apps"], false))
         .await;
 
-    assert_eq!(report.steps[0].images_base64, ["UE5H"]);
+    assert_eq!(report.steps[0].images[0].base64_data, "UE5H");
+    assert_eq!(report.steps[0].images[0].mime_type, "image/jpeg");
+    assert_eq!(
+        *dispatcher.trace_arguments.lock().unwrap(),
+        [serde_json::json!({ "format": "jpeg" })]
+    );
     assert_eq!(
         *dispatcher.calls.lock().unwrap(),
         ["desk_list_apps", "desk_screenshot"]

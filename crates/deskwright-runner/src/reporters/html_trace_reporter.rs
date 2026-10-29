@@ -61,12 +61,14 @@ fn render_step(step: &StepReport) -> String {
         ("pass", "ok")
     };
     let images: String = step
-        .images_base64
+        .images
         .iter()
         .map(|image| {
             format!(
-                "<img alt=\"Screen after step {}\" src=\"data:image/png;base64,{image}\">",
-                step.index + 1
+                "<img alt=\"Screen after step {}\" src=\"data:{};base64,{}\">",
+                step.index + 1,
+                escape_html(&image.mime_type),
+                image.base64_data
             )
         })
         .collect();
@@ -100,7 +102,7 @@ mod tests {
         assert!(html.starts_with("<!doctype html>"));
         assert!(html.contains("<p>1 passed, 1 failed</p>"));
         assert!(html.contains("Send &lt;hi&gt;"));
-        assert!(html.contains("src=\"data:image/png;base64,iVBORw0KGgo=\""));
+        assert!(html.contains("src=\"data:image/jpeg;base64,/9j/4AAQ\""));
         assert!(html.contains("<details open>"));
         assert!(html.contains("2 step(s) skipped after the failure"));
         assert!(html.contains("97.4 ms"));

@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- `desk_screenshot` captures a single window with `app` (and `title`/`index`) from the
+  window's own pixels, so windows in front of it don't appear; off-screen windows are refused
+  instead of capturing another app.
+- Screenshots default to point resolution (a quarter of the pixels on Retina, like
+  Playwright's `scale: "css"`): 842 KB → 387 KB for a full display. `resolution: "pixels"`
+  keeps full detail.
+- `format: "jpeg"` (with `quality`) makes screenshots 2.5–6× smaller; flow traces now use it.
+
 ## 0.1.0 (2026-10-29)
 
 First public release.

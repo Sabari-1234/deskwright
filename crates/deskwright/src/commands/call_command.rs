@@ -27,9 +27,13 @@ pub fn render_output(output: &ToolOutput) -> String {
         .iter()
         .map(|block| match block {
             OutputBlock::Text(text) => text.clone(),
-            OutputBlock::PngImage { base64_data } => {
-                format!("[PNG image, {} base64 characters]", base64_data.len())
-            }
+            OutputBlock::Image {
+                base64_data,
+                mime_type,
+            } => format!(
+                "[{mime_type} image, {} base64 characters]",
+                base64_data.len()
+            ),
         })
         .collect::<Vec<_>>()
         .join("\n")
@@ -40,27 +44,39 @@ fn save_images(output: &ToolOutput, tool: &str, image_dir: &Path) -> anyhow::Res
     std::fs::create_dir_all(image_dir)?;
     let mut saved = Vec::new();
     let images = output.blocks.iter().filter_map(|block| match block {
-        OutputBlock::PngImage { base64_data } => Some(base64_data),
+        OutputBlock::Image {
+            base64_data,
+            mime_type,
+        } => Some((base64_data, file_extension(mime_type))),
         OutputBlock::Text(_) => None,
     });
-    for (index, base64_data) in images.enumerate() {
-        let path = image_dir.join(format!("{tool}-{index}.png"));
+    for (index, (base64_data, extension)) in images.enumerate() {
+        let path = image_dir.join(format!("{tool}-{index}.{extension}"));
         std::fs::write(&path, BASE64_STANDARD.decode(base64_data)?)?;
         saved.push(path);
     }
     Ok(saved)
 }
 
+/// The file extension for an image MIME type, defaulting to the subtype ("image/png" → "png").
+fn file_extension(mime_type: &str) -> &str {
+    match mime_type {
+        "image/jpeg" => "jpg",
+        other => other.rsplit('/').next().unwrap_or("img"),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    fn output_with_image() -> ToolOutput {
+    fn output_with_image(mime_type: &'static str) -> ToolOutput {
         ToolOutput {
             blocks: vec![
                 OutputBlock::Text("Captured.".to_owned()),
-                OutputBlock::PngImage {
+                OutputBlock::Image {
                     base64_data: BASE64_STANDARD.encode(b"png bytes"),
+                    mime_type,
                 },
             ],
             is_error: false,
@@ -70,20 +86,32 @@ mod tests {
     #[test]
     fn renders_text_and_summarizes_images() {
         assert_eq!(
-            render_output(&output_with_image()),
-            "Captured.\n[PNG image, 12 base64 characters]\n"
+            render_output(&output_with_image("image/png")),
+            "Captured.\n[image/png image, 12 base64 characters]\n"
         );
     }
 
     #[test]
-    fn saves_each_image_as_a_png_file() {
+    fn saves_each_image_with_the_extension_of_its_format() {
         let directory =
             std::env::temp_dir().join(format!("deskwright-call-{}", std::process::id()));
 
-        let saved = save_images(&output_with_image(), "desk_screenshot", &directory).unwrap();
+        let png = save_images(
+            &output_with_image("image/png"),
+            "desk_screenshot",
+            &directory,
+        )
+        .unwrap();
+        let jpeg = save_images(
+            &output_with_image("image/jpeg"),
+            "desk_screenshot",
+            &directory,
+        )
+        .unwrap();
 
-        assert_eq!(saved, [directory.join("desk_screenshot-0.png")]);
-        assert_eq!(std::fs::read(&saved[0]).unwrap(), b"png bytes");
+        assert_eq!(png, [directory.join("desk_screenshot-0.png")]);
+        assert_eq!(jpeg, [directory.join("desk_screenshot-0.jpg")]);
+        assert_eq!(std::fs::read(&png[0]).unwrap(), b"png bytes");
         std::fs::remove_dir_all(directory).unwrap();
     }
 }

@@ -57,7 +57,7 @@ other operating systems, and the binary depends on it only on macOS.
 | `AppTerminator` | Ask an app to quit, or force it | `RunningAppTerminator` | `FakeDesktop` |
 | `Clipboard` | Read and write the clipboard's text | `PasteboardClipboard` | `FakeDesktop` |
 | `InputSynthesizer` | Synthetic typing, clicks, double/right clicks, pointer moves, drags and key chords | `EnigoInputSynthesizer` | `FakeDesktop` |
-| `ScreenCapturer` | Display or region PNG capture | `XcapScreenCapturer` | `FakeDesktop` |
+| `ScreenCapturer` | Display, region or window capture, scaled and encoded as PNG or JPEG | `XcapScreenCapturer` | `FakeDesktop` |
 | `ScriptRunner` | AppleScript/JXA execution | `OsaScriptRunner` | `FakeDesktop` |
 
 Platform UI elements cross the ports as the opaque `NativeElement` handle; only the adapter

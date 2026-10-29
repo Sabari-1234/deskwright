@@ -126,6 +126,17 @@ impl WindowService {
         }
     }
 
+    /// The app and the window `window_selector` picks in it, as read now.
+    pub fn find(
+        &self,
+        app_selector: &AppSelector,
+        window_selector: &WindowSelector,
+    ) -> DeskwrightResult<(AppInfo, WindowSummary)> {
+        let app = self.resolve_app(app_selector)?;
+        let window = self.select(&app, window_selector)?;
+        Ok((app, window.summary))
+    }
+
     fn resolve_app(&self, selector: &AppSelector) -> DeskwrightResult<AppInfo> {
         self.permission.ensure_granted()?;
         self.apps.resolve(selector)
@@ -429,5 +440,19 @@ mod tests {
                 RecordedAction::Raise(report)
             ]
         );
+    }
+
+    #[test]
+    fn finds_the_selected_window_without_changing_it() {
+        let desktop = Arc::new(FakeDesktop::new());
+        let (process_id, _, _) = pages_with_two_documents(&desktop);
+
+        let (app, window) = window_service(&desktop)
+            .find(&AppSelector::Frontmost, &titled("report"))
+            .unwrap();
+
+        assert_eq!(app.process_id, process_id);
+        assert_eq!(window.title.as_deref(), Some("Report.pages"));
+        assert!(desktop.recorded_actions().is_empty());
     }
 }

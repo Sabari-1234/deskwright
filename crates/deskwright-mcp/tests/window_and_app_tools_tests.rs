@@ -178,3 +178,84 @@ async fn writes_and_reads_the_clipboard_without_echoing_on_write() {
     assert_eq!(text_of(&written), "Put the text on the clipboard.");
     assert_eq!(text_of(&read), "s3cret");
 }
+
+fn image_mime_type(output: &deskwright_mcp::tool::ToolOutput) -> Option<&'static str> {
+    output.blocks.iter().find_map(|block| match block {
+        deskwright_mcp::tool::OutputBlock::Image { mime_type, .. } => Some(*mime_type),
+        deskwright_mcp::tool::OutputBlock::Text(_) => None,
+    })
+}
+
+#[tokio::test]
+async fn screenshots_a_window_by_app_and_title_as_jpeg() {
+    let fixture = Fixture::new();
+    add_groceries_window(&fixture);
+
+    let output = fixture
+        .call(
+            "desk_screenshot",
+            json!({ "app": "Notes", "title": "grocer", "format": "jpeg", "quality": 60 }),
+        )
+        .await;
+
+    assert!(!output.is_error, "{}", text_of(&output));
+    assert_eq!(image_mime_type(&output), Some("image/jpeg"));
+    assert_eq!(
+        fixture.desktop.captured_windows()[0].1,
+        Bounds {
+            x: 100.0,
+            y: 50.0,
+            width: 400.0,
+            height: 300.0
+        }
+    );
+}
+
+#[tokio::test]
+async fn screenshots_default_to_point_resolution_png() {
+    use deskwright_core::model::encoded_image::{CaptureOptions, CaptureResolution, ImageFormat};
+    let fixture = Fixture::new();
+
+    let default = fixture.call("desk_screenshot", json!({})).await;
+    fixture
+        .call("desk_screenshot", json!({ "resolution": "pixels" }))
+        .await;
+
+    assert_eq!(image_mime_type(&default), Some("image/png"));
+    assert_eq!(
+        fixture.desktop.capture_options(),
+        [
+            CaptureOptions::default(),
+            CaptureOptions {
+                resolution: CaptureResolution::Pixels,
+                format: ImageFormat::Png
+            }
+        ]
+    );
+}
+
+#[tokio::test]
+async fn screenshot_rejects_conflicting_or_invalid_options() {
+    let fixture = Fixture::new();
+
+    let both = fixture
+        .call("desk_screenshot", json!({ "ref": "e1", "app": "Notes" }))
+        .await;
+    let png_quality = fixture
+        .call("desk_screenshot", json!({ "quality": 50 }))
+        .await;
+    let bad_quality = fixture
+        .call("desk_screenshot", json!({ "format": "jpeg", "quality": 0 }))
+        .await;
+    let no_window = fixture
+        .call(
+            "desk_screenshot",
+            json!({ "app": "Notes", "title": "Budget" }),
+        )
+        .await;
+
+    assert!(text_of(&both).contains("not both"));
+    assert!(text_of(&png_quality).contains("only applies to format \"jpeg\""));
+    assert!(text_of(&bad_quality).contains("must be 1–100"));
+    assert!(text_of(&no_window).contains("Notes has no window titled \"Budget\""));
+}

@@ -14,9 +14,17 @@ pub struct StepReport {
     pub is_error: bool,
     /// The step's text output.
     pub text: String,
-    /// PNG images from the step itself or from the trace screenshot after it, base64.
+    /// Images from the step itself or from the trace screenshot after it.
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub images_base64: Vec<String>,
+    pub images: Vec<StepImage>,
+}
+
+/// One image in a report: base64 data and its MIME type, such as `image/jpeg`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StepImage {
+    pub mime_type: String,
+    pub base64_data: String,
 }
 
 /// The result of running one flow.
@@ -60,7 +68,7 @@ mod tests {
             duration: Duration::from_millis(12),
             is_error,
             text: "Clicked e2.".to_owned(),
-            images_base64: Vec::new(),
+            images: Vec::new(),
         }
     }
 
@@ -90,6 +98,6 @@ mod tests {
 
         assert_eq!(json["duration"], 30.0);
         assert_eq!(json["steps"][0]["duration"], 12.0);
-        assert!(json["steps"][0].get("imagesBase64").is_none());
+        assert!(json["steps"][0].get("images").is_none());
     }
 }

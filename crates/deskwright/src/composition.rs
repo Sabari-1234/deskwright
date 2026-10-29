@@ -143,11 +143,6 @@ pub fn build_tool_registry(
         element_registry.clone(),
         adapters.tree.clone(),
     ));
-    let screenshots = Arc::new(ScreenshotService::new(
-        adapters.capturer.clone(),
-        element_registry.clone(),
-        adapters.tree.clone(),
-    ));
 
     let launches = Arc::new(AppLaunchService::new(
         adapters.launcher.clone(),
@@ -166,6 +161,12 @@ pub fn build_tool_registry(
         adapters.windows.clone(),
         adapters.launcher.clone(),
         WINDOW_SETTLE_TIMEOUT,
+    ));
+    let screenshots = Arc::new(ScreenshotService::new(
+        adapters.capturer.clone(),
+        element_registry.clone(),
+        adapters.tree.clone(),
+        windows.clone(),
     ));
     let keyboard = Arc::new(KeyboardService::new(
         AppResolver::new(adapters.apps.clone()),
@@ -214,7 +215,7 @@ pub fn build_tool_registry(
         .register(ListAppsTool::new(adapters.apps.clone()))?
         .register(LaunchAppTool::new(launches))?
         .register(QuitAppTool::new(quits))?
-        .register(WindowTool::new(windows))?
+        .register(WindowTool::new(windows.clone()))?
         .register(ReadClipboardTool::new(adapters.clipboard.clone()))?
         .register(WriteClipboardTool::new(adapters.clipboard.clone()))?
         .register(PressKeysTool::new(keyboard))?

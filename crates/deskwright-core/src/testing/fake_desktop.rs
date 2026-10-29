@@ -5,10 +5,10 @@ use crate::element_registry::ElementRegistry;
 use crate::error::{DeskwrightError, DeskwrightResult};
 use crate::model::app::{AppInfo, ProcessId};
 use crate::model::element::{ElementAttributes, ElementRef};
+use crate::model::encoded_image::{CaptureOptions, EncodedImage};
 use crate::model::geometry::{Bounds, Point, Size};
 use crate::model::key_chord::KeyChord;
 use crate::model::native_element::NativeElement;
-use crate::model::png_image::PngImage;
 use crate::model::script::Script;
 use crate::model::web_address::WebAddress;
 use crate::ports::{
@@ -95,6 +95,8 @@ struct DesktopState {
     menu_bar_by_process: HashMap<ProcessId, FakeElementId>,
     recorded_actions: Vec<RecordedAction>,
     captured_regions: Vec<Bounds>,
+    captured_windows: Vec<(ProcessId, Bounds)>,
+    capture_options: Vec<CaptureOptions>,
     script_result: DeskwrightResult<String>,
     not_installed_apps: Vec<String>,
     element_read_count: usize,
@@ -124,6 +126,8 @@ impl FakeDesktop {
                 menu_bar_by_process: HashMap::new(),
                 recorded_actions: Vec::new(),
                 captured_regions: Vec::new(),
+                captured_windows: Vec::new(),
+                capture_options: Vec::new(),
                 script_result: Ok(String::new()),
                 not_installed_apps: Vec::new(),
                 element_read_count: 0,
@@ -285,6 +289,21 @@ impl FakeDesktop {
 
     pub fn captured_regions(&self) -> Vec<Bounds> {
         self.locked().captured_regions.clone()
+    }
+
+    /// The process and bounds of every window captured, in call order.
+    pub fn captured_windows(&self) -> Vec<(ProcessId, Bounds)> {
+        self.locked().captured_windows.clone()
+    }
+
+    /// The options of every capture, in call order.
+    pub fn capture_options(&self) -> Vec<CaptureOptions> {
+        self.locked().capture_options.clone()
+    }
+
+    /// Minimizes or restores a window directly, without recording an action.
+    pub fn set_minimized(&self, window: FakeElementId, is_minimized: bool) {
+        self.locked().elements[window.0].is_minimized = is_minimized;
     }
 
     fn push_element(state: &mut DesktopState, attributes: ElementAttributes) -> FakeElementId {
@@ -653,14 +672,36 @@ impl InputSynthesizer for FakeDesktop {
     }
 }
 
+impl FakeDesktop {
+    /// Records the options and returns placeholder bytes in the requested format.
+    fn fake_image(&self, options: &CaptureOptions) -> EncodedImage {
+        self.locked().capture_options.push(*options);
+        EncodedImage::new(options.format, FAKE_PNG_SIGNATURE.to_vec())
+    }
+}
+
 impl ScreenCapturer for FakeDesktop {
-    fn capture_main_display(&self) -> DeskwrightResult<PngImage> {
-        Ok(PngImage::from_encoded_bytes(FAKE_PNG_SIGNATURE.to_vec()))
+    fn capture_main_display(&self, options: &CaptureOptions) -> DeskwrightResult<EncodedImage> {
+        Ok(self.fake_image(options))
     }
 
-    fn capture_region(&self, region: Bounds) -> DeskwrightResult<PngImage> {
+    fn capture_region(
+        &self,
+        region: Bounds,
+        options: &CaptureOptions,
+    ) -> DeskwrightResult<EncodedImage> {
         self.locked().captured_regions.push(region);
-        Ok(PngImage::from_encoded_bytes(FAKE_PNG_SIGNATURE.to_vec()))
+        Ok(self.fake_image(options))
+    }
+
+    fn capture_window(
+        &self,
+        process_id: ProcessId,
+        bounds: Bounds,
+        options: &CaptureOptions,
+    ) -> DeskwrightResult<EncodedImage> {
+        self.locked().captured_windows.push((process_id, bounds));
+        Ok(self.fake_image(options))
     }
 }
 
