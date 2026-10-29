@@ -12,10 +12,11 @@ One release publishes:
 | GitHub Releases | Prebuilt `aarch64-apple-darwin` and `x86_64-apple-darwin` archives with checksums | the workflow |
 | Shell installer | `curl -LsSf …/deskwright-installer.sh \| sh` | the workflow (attached to the release) |
 | Homebrew | `brew install sabari-1234/tap/deskwright` | `scripts/update-homebrew-tap.sh`, run after the workflow |
-| npm | `npx -y deskwright` | not yet published (see below) |
+| npm | `npx -y deskwright` | `scripts/publish-npm.sh`, run after the workflow |
 
-No repository secrets are needed: the workflow uses only the built-in `GITHUB_TOKEN`, and the
-tap is updated with the maintainer's GitHub CLI login.
+No repository secrets are needed: the workflow uses only the built-in `GITHUB_TOKEN`, the tap
+is updated with the maintainer's GitHub CLI login, and npm is published from the
+maintainer's `npm login`, approved with their two-factor authentication.
 
 ## Cutting a release
 
@@ -28,23 +29,22 @@ tap is updated with the maintainer's GitHub CLI login.
    git push origin main v0.1.0
    ```
 
-4. When the "Release" workflow has finished, publish the Homebrew formula:
+4. When the "Release" workflow has finished, publish the Homebrew formula and the npm
+   package (in an interactive terminal: npm asks you to approve with your second factor):
 
    ```bash
    ./scripts/update-homebrew-tap.sh v0.1.0
+   ./scripts/publish-npm.sh v0.1.0
    ```
 
-## npm (not yet enabled)
+   A new npm version can take a minute to appear; `npm view deskwright version` shows it.
 
-Each release already contains `deskwright-npm-package.tar.gz`. To publish it:
+## Publishing npm from CI instead (optional)
 
-1. Sign in once with `npm login`, then publish the first version from the release asset:
-   `npm publish deskwright-npm-package.tar.gz --access public`.
-2. To publish later releases from the workflow, add `"npm"` to `publish-jobs` in
-   `[workspace.metadata.dist]`, run `dist generate`, and give the job credentials: either an
-   `NPM_TOKEN` repository secret, or, if the generated job supports it, an npm **trusted
-   publisher** for `Sabari-1234/deskwright` and `release.yml` (set in the package's settings
-   on npmjs.com), which needs no token.
+To publish from the workflow rather than by hand, add `"npm"` to `publish-jobs` in
+`[workspace.metadata.dist]`, run `dist generate`, and give the job credentials: an
+`NPM_TOKEN` repository secret, or, if the generated job supports it, an npm trusted publisher
+for `Sabari-1234/deskwright` and `release.yml` (set in the package's settings on npmjs.com).
 
 ## Adding a platform
 

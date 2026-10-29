@@ -13,5 +13,5 @@ First public release.
 - `deskwright` CLI: `serve`, `tools`, `call` and `run` for JSON flows, with text, JSON and
   HTML-trace reports.
 - Rust library facade `deskwright::Deskwright`.
-- Install with `brew install sabari-1234/tap/deskwright`, the shell installer, or the
-  prebuilt Apple Silicon and Intel binaries on GitHub Releases.
+- Install with `npx -y deskwright`, `brew install sabari-1234/tap/deskwright`, the shell
+  installer, or the prebuilt Apple Silicon and Intel binaries on GitHub Releases.
